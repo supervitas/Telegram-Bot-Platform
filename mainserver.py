@@ -53,8 +53,8 @@ def check_updates(limit=5):
             break
         else:
             f = open('not_auth_msg.log', 'a')
-            message = message.split(" ")
             f.write("Message - %s    id - %s Name - %s %s " %(message,from_id,name ,surname) + "  %s" %datetime.now() + '\n')
+            message = message.split(" ")
             f.close()
             send_respond("You are not autherised,%s.Please,enter password!"%name, from_id )
 
