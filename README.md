@@ -1,4 +1,4 @@
-# TelegramBot
+# Telegram Bot Platform
 Platform to use bots in Telegram.Use modules to expand you bot functionality
 
 Current modules are:
