@@ -41,7 +41,7 @@ def check_updates(limit=5):
 
         if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
             Logger.log_auth_user(message, from_id, name, surname)
-            control_server.message_confirmed(message,from_id)
+            control_server.message_confirmed(message, from_id)
 
         if (ADMIN_ID != from_id) or (from_id != TEMP_ID):
             Logger.log_notauth_user(message, from_id, name, surname)
@@ -49,7 +49,7 @@ def check_updates(limit=5):
 
 class Respond:  # Класс отправления ответа
     @staticmethod
-    def send_respond(text, chat_id):
+    def send_text_respond(text, chat_id):
         params = make_url_query_string({'chat_id': chat_id, 'text': text}) # Преобразование параметров
         request = requests.get(URL + TOKEN + '/sendMessage' + params) # HTTP запрос
         if not request.status_code == 200: return False  # Проверка ответа сервера

@@ -8,7 +8,7 @@ import telegram_handler as handler
 pid = 0
 
 
-def message_confirmed(message, user_id):
+def current_command(message, user_id):
 
         message = message.split(" ")
         t = threading.Thread(target=start_process(message, user_id))
@@ -22,8 +22,8 @@ def start_process(message, user_id):
                 process = sub.Popen((message), stdout=sub.PIPE, stdin=sub.PIPE, stderr=sub.PIPE)
                 pid = process.pid
                 for row in process.stdout:
-                    handler.Respond.send_respond(row, user_id)
+                    handler.Respond.send_text_respond(row, user_id)
                 for row in process.stderr:
-                    handler.Respond.send_respond(row, user_id)
+                    handler.Respond.send_text_respond(row, user_id)
         except Exception:
-                 handler.Respond.send_respond("Не правильная комманда",id)
+                 handler.Respond.send_text_respond("Не правильная комманда",id)
