@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'nikolaev'
 
-# import control_server
+import control_server
 import requests
 import os
 from datetime import datetime, timedelta
@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 INTERVAL = 5  # Интервал проверки наличия новых сообщений (обновлений) на сервере в секундах
 ADMIN_ID = 54052993  # ID пользователя. Комманды от других пользователей выполняться не будут
 TEMP_ID = 0  # Временный ID админа.Присваивается отправлением пароля
-flag = 0
 URL = 'https://api.telegram.org/bot'  # Адрес HTTP Bot API
 TOKEN = '94799839:AAEOHMOexXt-X-3tnMCPT2VzC1b63fTpo9c'  # Ключ авторизации для Вашего бота
 offset = 0
@@ -40,13 +39,25 @@ def check_updates(limit=5):
         surname = update['message']['from']['last_name']
         message = update['message']['text']
 
-        if (ADMIN_ID == from_id) or (from_id == TEMP_ID and zero_access()):
+        if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
             Logger.log_auth_user(message, from_id, name, surname)
+            control_server.message_confirmed(message,from_id)
+
         if (ADMIN_ID != from_id) or (from_id != TEMP_ID):
             Logger.log_notauth_user(message, from_id, name, surname)
 
 
-class Auth:
+class Respond:  # Класс отправления ответа
+    @staticmethod
+    def send_respond(text, chat_id):
+        params = make_url_query_string({'chat_id': chat_id, 'text': text}) # Преобразование параметров
+        request = requests.get(URL + TOKEN + '/sendMessage' + params) # HTTP запрос
+        if not request.status_code == 200: return False  # Проверка ответа сервера
+        if not request.json()['ok']: return False  # Проверка успешности обращения к API
+        return True
+
+
+class Auth: # Класс авторизации
     @staticmethod
     def login(id): # Функция авторизации длится 10 минут
         global TEMP_ID, current_time, now_plus_10
@@ -64,10 +75,7 @@ class Auth:
             return False
 
 
-
 class Logger:  # Класс отвечает за создание лог файлов, и логирование
-    def __init__(self):
-        pass
 
     @staticmethod
     def log_notauth_user(message, from_id, name, surname):
@@ -80,18 +88,18 @@ class Logger:  # Класс отвечает за создание лог фай
         f.write("Message - %s    id - %s Name - %s %s " %(message, from_id, name, surname) + "  %s" % datetime.now() + '\n')
 
     @staticmethod
-    def create_files(): # Создаем файлы логов
+    def check_files(): # Создаем файлы логов
         if not (os.path.isfile('auth_msg.log') and os.path.isfile('not_auth_msg.log')):
             f1 = open('not_auth_msg.log', 'w')
             f2 = open('auth_msg.log', 'w')
             f1.close()
             f2.close()
 
-Logger.create_files()
 
-while True:
-
-    check_updates(1)
+if __name__ == '__main__':
+    Logger.check_files()
+    while True:
+        check_updates(1)
 
 
 
