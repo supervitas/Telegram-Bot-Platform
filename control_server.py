@@ -19,11 +19,11 @@ def start_process(message, user_id):
 
         global pid
         try:
-                process = sub.Popen((message), stdout=sub.PIPE, stdin=sub.PIPE, stderr=sub.PIPE)
+                process = sub.Popen(message, stdout=sub.PIPE, stdin=sub.PIPE, stderr=sub.PIPE)
                 pid = process.pid
                 for row in process.stdout:
                     handler.Respond.send_text_respond(row, user_id)
                 for row in process.stderr:
                     handler.Respond.send_text_respond(row, user_id)
         except Exception:
-                 handler.Respond.send_text_respond("Не правильная комманда",id)
+                 handler.Respond.send_text_respond("Не правильная комманда",user_id)

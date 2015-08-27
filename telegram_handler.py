@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 __author__ = 'nikolaev'
 
-import control_server
+import control_server, settings
 import requests
 import os
+import ConfigParser
 from datetime import datetime, timedelta
 
 
-INTERVAL = 5  # Интервал проверки наличия новых сообщений (обновлений) на сервере в секундах
-ADMIN_ID = 54052993  # ID пользователя. Комманды от других пользователей выполняться не будут
+ADMIN_ID = 0  # ID пользователя. Комманды от других пользователей выполняться не будут
 TEMP_ID = 0  # Временный ID админа.Присваивается отправлением пароля
+TEMP_PASSWORD = 0
 URL = 'https://api.telegram.org/bot'  # Адрес HTTP Bot API
-TOKEN = '94799839:AAEOHMOexXt-X-3tnMCPT2VzC1b63fTpo9c'  # Ключ авторизации для Вашего бота
+TOKEN = 0  # Ключ авторизации для Вашего бота
 offset = 0
 current_time = 0
 now_plus_10 = 0
@@ -24,7 +25,7 @@ def make_url_query_string(params):
 
 def check_updates(limit=5):
 
-    global offset, TEMP_ID, pid
+    global offset, TEMP_ID, pid, TOKEN
     params = make_url_query_string({'offset': offset+1, 'limit': limit, 'timeout': 0})
     request = requests.get(URL + TOKEN + '/getUpdates' + params) # Отправка запроса обновлений
 
@@ -41,15 +42,16 @@ def check_updates(limit=5):
 
         if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
             Logger.log_auth_user(message, from_id, name, surname)
-            control_server.message_confirmed(message, from_id)
+            control_server.current_command(message, from_id)
 
-        if (ADMIN_ID != from_id) or (from_id != TEMP_ID):
+        if (ADMIN_ID != from_id) and (from_id != TEMP_ID):
             Logger.log_notauth_user(message, from_id, name, surname)
 
 
 class Respond:  # Класс отправления ответа
     @staticmethod
     def send_text_respond(text, chat_id):
+        global TOKEN
         params = make_url_query_string({'chat_id': chat_id, 'text': text}) # Преобразование параметров
         request = requests.get(URL + TOKEN + '/sendMessage' + params) # HTTP запрос
         if not request.status_code == 200: return False  # Проверка ответа сервера
@@ -79,27 +81,44 @@ class Logger:  # Класс отвечает за создание лог фай
 
     @staticmethod
     def log_notauth_user(message, from_id, name, surname):
-        f = open('not_auth_msg.log', 'a')
+        f = open('logs/not_auth_msg.log', 'a')
         f.write("Message - %s    id - %s Name - %s %s " %(message, from_id, name, surname) + "  %s" % datetime.now() + '\n')
 
     @staticmethod
     def log_auth_user(message, from_id, name, surname):
-        f = open('auth_msg.log', 'a')
+        f = open('logs/auth_msg.log', 'a')
         f.write("Message - %s    id - %s Name - %s %s " %(message, from_id, name, surname) + "  %s" % datetime.now() + '\n')
 
     @staticmethod
-    def check_files(): # Создаем файлы логов
-        if not (os.path.isfile('auth_msg.log') and os.path.isfile('not_auth_msg.log')):
-            f1 = open('not_auth_msg.log', 'w')
-            f2 = open('auth_msg.log', 'w')
+    def check_files():  # Создаем файлы логов и настроек
+        if not (os.path.isfile('logs/auth_msg.log') and os.path.isfile('logs/not_auth_msg.log')):
+            if not (os.path.isdir('logs')): os.mkdir('logs')
+            f1 = open('logs/not_auth_msg.log', 'w')
+            f2 = open('logs/auth_msg.log', 'w')
             f1.close()
             f2.close()
 
 
+class ConfigReader: # Читаем конфиг
+    @staticmethod
+    def load_config():
+        global ADMIN_ID, TOKEN, TEMP_PASSWORD
+
+        parser = ConfigParser.SafeConfigParser()
+
+        parser.read('telegram_settings.conf')
+        ADMIN_ID = int(parser.get('Main Settings', 'admin_id'))
+        TOKEN = parser.get('Main Settings', 'token')
+        TEMP_PASSWORD = parser.get('Main Settings', 'admin password')
+
+
+
+
+
 if __name__ == '__main__':
     Logger.check_files()
+    ConfigReader.load_config()
     while True:
         check_updates(1)
-
 
 
