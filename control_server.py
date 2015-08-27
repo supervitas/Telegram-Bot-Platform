@@ -2,7 +2,7 @@
 __author__ = 'nikolaev'
 import subprocess as sub
 import threading
-import telegram_handler as handler
+import main_handler as handler
 
 
 pid = 0

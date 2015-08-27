@@ -4,20 +4,16 @@ __author__ = 'nikolaev'
 import control_server, settings
 import requests
 import os
-import ConfigParser
 from datetime import datetime, timedelta
 
-
-ADMIN_ID = 0  # ID пользователя. Комманды от других пользователей выполняться не будут
+offset = 0
 TEMP_ID = 0  # Временный ID админа.Присваивается отправлением пароля
 TEMP_PASSWORD = 0
 URL = 'https://api.telegram.org/bot'  # Адрес HTTP Bot API
-TOKEN = 0  # Ключ авторизации для Вашего бота
-offset = 0
 current_time = 0
 now_plus_10 = 0
-pid = 0
-
+TOKEN = settings.load_config("GET_TOKEN")
+ADMIN_ID = settings.load_config("GET_ADMIN_ID")
 
 def make_url_query_string(params):
     return '?' + '&'.join([str(key) + '=' + str(params[key]) for key in params])
@@ -25,7 +21,8 @@ def make_url_query_string(params):
 
 def check_updates(limit=5):
 
-    global offset, TEMP_ID, pid, TOKEN
+    global offset
+
     params = make_url_query_string({'offset': offset+1, 'limit': limit, 'timeout': 0})
     request = requests.get(URL + TOKEN + '/getUpdates' + params) # Отправка запроса обновлений
 
@@ -34,8 +31,8 @@ def check_updates(limit=5):
     if not request.json()['result']: return False # Проверка наличия обновлений в возвращенном списке
 
     for update in request.json()['result']: # Проверка каждого элемента списка
-        offset = update['update_id'] # Извлечение ID сообщения
-        from_id = update['message']['from']['id'] # Извлечение ID отправителя
+        offset = update['update_id']  # Извлечение ID сообщения
+        from_id = update['message']['from']['id']  # Извлечение ID отправителя
         name = update['message']['from']['first_name']
         surname = update['message']['from']['last_name']
         message = update['message']['text']
@@ -51,7 +48,7 @@ def check_updates(limit=5):
 class Respond:  # Класс отправления ответа
     @staticmethod
     def send_text_respond(text, chat_id):
-        global TOKEN
+        TOKEN = settings.load_config("GET_TOKEN")
         params = make_url_query_string({'chat_id': chat_id, 'text': text}) # Преобразование параметров
         request = requests.get(URL + TOKEN + '/sendMessage' + params) # HTTP запрос
         if not request.status_code == 200: return False  # Проверка ответа сервера
@@ -59,7 +56,7 @@ class Respond:  # Класс отправления ответа
         return True
 
 
-class Auth: # Класс авторизации
+class Auth:  # Класс авторизации
     @staticmethod
     def login(id): # Функция авторизации длится 10 минут
         global TEMP_ID, current_time, now_plus_10
@@ -92,32 +89,17 @@ class Logger:  # Класс отвечает за создание лог фай
     @staticmethod
     def check_files():  # Создаем файлы логов и настроек
         if not (os.path.isfile('logs/auth_msg.log') and os.path.isfile('logs/not_auth_msg.log')):
-            if not (os.path.isdir('logs')): os.mkdir('logs')
+            if not (os.path.isdir('logs')):
+                os.mkdir('logs')
             f1 = open('logs/not_auth_msg.log', 'w')
             f2 = open('logs/auth_msg.log', 'w')
             f1.close()
             f2.close()
-
-
-class ConfigReader: # Читаем конфиг
-    @staticmethod
-    def load_config():
-        global ADMIN_ID, TOKEN, TEMP_PASSWORD
-
-        parser = ConfigParser.SafeConfigParser()
-
-        parser.read('telegram_settings.conf')
-        ADMIN_ID = int(parser.get('Main Settings', 'admin_id'))
-        TOKEN = parser.get('Main Settings', 'token')
-        TEMP_PASSWORD = parser.get('Main Settings', 'admin password')
-
-
-
+        settings.check_config()
 
 
 if __name__ == '__main__':
     Logger.check_files()
-    ConfigReader.load_config()
     while True:
         check_updates(1)
 

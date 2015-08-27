@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
 __author__ = 'nikolaev'
+
 import ConfigParser
 import os
+
 
 def make_config():
     admin_id = raw_input("Enter admin id in telegram:")
@@ -18,15 +21,20 @@ def make_config():
     parser.write(config_file)
 
 
-def read_config():
+def load_config(case):
     parser = ConfigParser.SafeConfigParser()
     parser.read('telegram_settings.conf')
 
-    for section_name in parser.sections():
-            print 'Section:', section_name
-            print '  Options:', parser.options(section_name)
-            for name, value in parser.items(section_name):
-                    print '  %s = %s' % (name, value)
+    ADMIN_ID = int(parser.get('Main Settings', 'admin_id'))
+    TOKEN = parser.get('Main Settings', 'token')
+    TEMP_PASSWORD = parser.get('Main Settings', 'admin password')
+
+    if (case == 'GET_ADMIN_ID'):
+        return ADMIN_ID
+    elif (case == 'GET_TOKEN'):
+        return TOKEN
+    else:
+        return TEMP_PASSWORD
 
 
 def check_config():
