@@ -28,8 +28,8 @@ def check_updates(limit=5):
     request = requests.get(URL + TOKEN + '/getUpdates' + params)  # Отправка запроса обновлений
 
     if not request.status_code == 200: return False # Проверка ответа сервера
-    if not request.json()['ok']: return False # Проверка успешности обращения к API
-    if not request.json()['result']: return False # Проверка наличия обновлений в возвращенном списке
+    if not request.json()['ok']: return False  # Проверка успешности обращения к API
+    if not request.json()['result']: return False  # Проверка наличия обновлений в возвращенном списке
 
     for update in request.json()['result']: # Проверка каждого элемента списка
         offset = update['update_id']  # Извлечение ID сообщения
@@ -46,7 +46,9 @@ def check_updates(limit=5):
         if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
             if (message[0] == "/"):
                 CURRENT_MODULE = message[1::]
-
+                continue
+            exec (('modules.%s.main_handler(message,from_id)')%CURRENT_MODULE)
+            # modules.control_server.main_handler(message,from_id)
             Logger.log_auth_user(message, from_id, name, surname)
 
 
@@ -113,6 +115,9 @@ class Logger:  # Класс отвечает за логирование + на�
 if __name__ == '__main__':
     Logger.check_files()
     while True:
-        check_updates(1)
-
+        try:
+            check_updates(1)
+        except KeyboardInterrupt:
+            print "Stopped by user"
+            break
 
