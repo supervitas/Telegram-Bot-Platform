@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 __author__ = 'nikolaev'
 
-import control_server, settings
-import requests
 import os
 from datetime import datetime, timedelta
+import requests
+import settings
+import modules.control_server
 
 offset = 0
 TEMP_ID = 0  # Временный ID админа.Присваивается отправлением пароля
-TEMP_PASSWORD = 0
 URL = 'https://api.telegram.org/bot'  # Адрес HTTP Bot API
 current_time = 0
 now_plus_10 = 0
 TOKEN = settings.load_config("GET_TOKEN")
 ADMIN_ID = settings.load_config("GET_ADMIN_ID")
+CURRENT_MODULE = 0
+
 
 def make_url_query_string(params):
     return '?' + '&'.join([str(key) + '=' + str(params[key]) for key in params])
@@ -21,10 +23,9 @@ def make_url_query_string(params):
 
 def check_updates(limit=5):
 
-    global offset
-
+    global offset, CURRENT_MODULE
     params = make_url_query_string({'offset': offset+1, 'limit': limit, 'timeout': 0})
-    request = requests.get(URL + TOKEN + '/getUpdates' + params) # Отправка запроса обновлений
+    request = requests.get(URL + TOKEN + '/getUpdates' + params)  # Отправка запроса обновлений
 
     if not request.status_code == 200: return False # Проверка ответа сервера
     if not request.json()['ok']: return False # Проверка успешности обращения к API
@@ -33,16 +34,27 @@ def check_updates(limit=5):
     for update in request.json()['result']: # Проверка каждого элемента списка
         offset = update['update_id']  # Извлечение ID сообщения
         from_id = update['message']['from']['id']  # Извлечение ID отправителя
-        name = update['message']['from']['first_name']
-        surname = update['message']['from']['last_name']
-        message = update['message']['text']
+        name = update['message']['from']['first_name']  # Извлечение имени
+        surname = update['message']['from']['last_name']  # Извлечение фамилии
+        message = update['message']['text'] # Извлечение сообщения
+
+        if (ADMIN_ID != from_id) and (message == settings.load_config("GET_PASSWORD")):
+            Auth.login(from_id)
+            Respond.send_text_respond("Auth Granted!", from_id)
+            continue
 
         if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
+            if (message[0] == "/"):
+                CURRENT_MODULE = message[1::]
+
             Logger.log_auth_user(message, from_id, name, surname)
-            control_server.current_command(message, from_id)
+
 
         if (ADMIN_ID != from_id) and (from_id != TEMP_ID):
+            Respond.send_text_respond("You are not autherised,%s.Please,enter password!"%name, from_id )
             Logger.log_notauth_user(message, from_id, name, surname)
+
+
 
 
 class Respond:  # Класс отправления ответа
@@ -74,7 +86,7 @@ class Auth:  # Класс авторизации
             return False
 
 
-class Logger:  # Класс отвечает за создание лог файлов, и логирование
+class Logger:  # Класс отвечает за логирование + настройки
 
     @staticmethod
     def log_notauth_user(message, from_id, name, surname):

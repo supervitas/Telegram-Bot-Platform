@@ -8,7 +8,7 @@ import main_handler as handler
 pid = 0
 
 
-def current_command(message, user_id):
+def main_handler(message, user_id):
 
         message = message.split(" ")
         t = threading.Thread(target=start_process(message, user_id))
