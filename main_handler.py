@@ -47,10 +47,11 @@ def check_updates(limit=5):
             if (message[0] == "/"):
                 CURRENT_MODULE = message[1::]
                 continue
-            exec (('modules.%s.main_handler(message,from_id)')%CURRENT_MODULE)
-            # modules.control_server.main_handler(message,from_id)
-            Logger.log_auth_user(message, from_id, name, surname)
-
+            try:
+                exec (('modules.%s.handler(message,from_id)')%CURRENT_MODULE)
+                Logger.log_auth_user(message, from_id, name, surname)
+            except Exception:
+                Respond.send_text_respond("Module with this name not found", from_id)
 
         if (ADMIN_ID != from_id) and (from_id != TEMP_ID):
             Respond.send_text_respond("You are not autherised,%s.Please,enter password!"%name, from_id )
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     Logger.check_files()
     while True:
         try:
-            check_updates(1)
+            check_updates(2)
         except KeyboardInterrupt:
             print "Stopped by user"
             break
