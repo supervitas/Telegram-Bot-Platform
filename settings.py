@@ -20,6 +20,7 @@ def make_config():
 
     config_file = open('telegram_settings.conf', "wb")
     parser.write(config_file)
+    config_file.close()
 
 
 def load_config(case):
