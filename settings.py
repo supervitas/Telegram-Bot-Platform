@@ -10,14 +10,15 @@ def make_config():
     token = raw_input("Enter token for your bot:")
     admin_password = raw_input("Enter password for access your bot not only with your device:")
 
-    parser = ConfigParser.SafeConfigParser()
-    config_file = open("telegram_settings.conf", "w")
+    parser = ConfigParser.RawConfigParser()
+
     parser.add_section('Main Settings')
 
     parser.set('Main Settings', 'admin_id', admin_id)
     parser.set('Main Settings', 'Token', token)
     parser.set('Main Settings', 'Admin password', admin_password)
 
+    config_file = open('telegram_settings.conf', "wb")
     parser.write(config_file)
 
 

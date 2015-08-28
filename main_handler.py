@@ -5,8 +5,10 @@ import os
 from datetime import datetime, timedelta
 import requests
 import settings
-import modules.control_server
+import modules
 
+
+settings.check_config()
 offset = 0
 TEMP_ID = 0  # Временный ID админа.Присваивается отправлением пароля
 URL = 'https://api.telegram.org/bot'  # Адрес HTTP Bot API
@@ -110,7 +112,7 @@ class Logger:  # Класс отвечает за логирование + на�
             f2 = open('logs/auth_msg.log', 'w')
             f1.close()
             f2.close()
-        settings.check_config()
+
 
 
 if __name__ == '__main__':
