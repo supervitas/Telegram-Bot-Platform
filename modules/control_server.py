@@ -11,6 +11,9 @@ pid = 0
 def handler(message, user_id):
 
         message = message.split(" ")
+        if message == 'break':
+            sub.Popen(("kill", str(pid)))
+
         t = threading.Thread(target=start_process(message, user_id))
         t.run()
 
