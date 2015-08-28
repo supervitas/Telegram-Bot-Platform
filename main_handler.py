@@ -7,7 +7,6 @@ import requests
 import settings
 import modules
 
-
 settings.check_config()
 offset = 0
 TEMP_ID = 0  # Временный ID админа.Присваивается отправлением пароля
@@ -50,6 +49,7 @@ def check_updates(limit=5):
                 CURRENT_MODULE = message[1::]
                 continue
             try:
+
                 exec (('modules.%s.handler(message,from_id)')%CURRENT_MODULE)
                 Logger.log_auth_user(message, from_id, name, surname)
             except Exception:

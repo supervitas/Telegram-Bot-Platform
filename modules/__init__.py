@@ -1,9 +1,5 @@
-import os
-import glob
+import pkgutil 
 
-from modules import *
-
-# modules = glob.glob(os.path.dirname(__file__)+"/*.py")
-# print modules
-
-# __all__ = [ os.path.basename(f)[:-3] for f in modules]
+__path__ = pkgutil.extend_path(__path__, __name__)
+for importer, modname, ispkg in pkgutil.walk_packages(path=__path__, prefix=__name__+'.'):
+    __import__(modname)
