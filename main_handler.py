@@ -65,13 +65,38 @@ def check_updates(limit=5):
 class Respond:  # Класс отправления ответа
     @staticmethod
     def send_text_respond(text, chat_id):
-        TOKEN = settings.load_config("GET_TOKEN")
-        params = make_url_query_string({'chat_id': chat_id, 'text': text}) # Преобразование параметров
-        request = requests.get(URL + TOKEN + '/sendMessage' + params) # HTTP запрос
+
+        data = {'chat_id': chat_id, 'text': text}
+
+        request = requests.post(URL + TOKEN + '/sendMessage', data=data)  # HTTP запрос
         if not request.status_code == 200: return False  # Проверка ответа сервера
         if not request.json()['ok']: return False  # Проверка успешности обращения к API
         return True
 
+    @staticmethod
+    def send_photo_respond(chat_id, name_of_photo):  # Метод отправки фото
+
+        data = {'chat_id': chat_id}
+        photo = {'photo': open(name_of_photo, 'rb')}
+
+        request = requests.post(URL+TOKEN+'/sendPhoto', data=data, files=photo)
+
+        if not request.status_code == 200: return False  # Проверка ответа сервера
+        if not request.json()['ok']: return False  # Проверка успешности обращения к API
+        return True
+
+
+    @staticmethod
+    def send_document(chat_id, name_of_file):  # Метод отправки файлов
+
+        data = {'chat_id': chat_id}
+        document = {'document': open(name_of_file, 'rb')}
+
+        request = requests.post(URL+TOKEN+'/sendDocument', data=data, files=document)
+
+        if not request.status_code == 200: return False  # Проверка ответа сервера
+        if not request.json()['ok']: return False  # Проверка успешности обращения к API
+        return True
 
 class Auth:  # Класс авторизации
     @staticmethod
@@ -110,10 +135,7 @@ class Logger:  # Класс отвечает за логирование + на�
                 os.mkdir('logs')
             f1 = open('logs/not_auth_msg.log', 'w')
             f2 = open('logs/auth_msg.log', 'w')
-            f1.close()
-            f2.close()
-
-
+            f1.close(), f2.close()
 
 if __name__ == '__main__':
     Logger.check_files()
@@ -123,4 +145,5 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print "Stopped by user"
             break
-
+        except KeyError:
+            continue
