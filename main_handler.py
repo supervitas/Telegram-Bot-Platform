@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timedelta
 import requests
 import settings
+import threading
 import modules
 
 settings.check_config()
@@ -13,20 +14,17 @@ TEMP_ID = 0  # Временный ID админа.Присваивается о�
 URL = 'https://api.telegram.org/bot'  # Адрес HTTP Bot API
 current_time = 0
 now_plus_10 = 0
+CURRENT_MODULE = 0
 TOKEN = settings.load_config("GET_TOKEN")
 ADMIN_ID = settings.load_config("GET_ADMIN_ID")
-CURRENT_MODULE = 0
+PASSWORD = settings.load_config("GET_PASSWORD")
 
-
-def make_url_query_string(params):
-    return '?' + '&'.join([str(key) + '=' + str(params[key]) for key in params])
-
-
-def check_updates(limit=5):
+def check_updates():
 
     global offset, CURRENT_MODULE
-    params = make_url_query_string({'offset': offset+1, 'limit': limit, 'timeout': 0})
-    request = requests.get(URL + TOKEN + '/getUpdates' + params)  # Отправка запроса обновлений
+
+    data = {'offset': offset + 1, 'limit': 5, 'timeout': 0}  # Формируем параметры запроса
+    request = requests.post(URL + TOKEN + '/getUpdates', data=data) # Отправка запроса обновлений
 
     if not request.status_code == 200: return False # Проверка ответа сервера
     if not request.json()['ok']: return False  # Проверка успешности обращения к API
@@ -37,7 +35,7 @@ def check_updates(limit=5):
         from_id = update['message']['from']['id']  # Извлечение ID отправителя
         name = update['message']['from']['first_name']  # Извлечение имени
         surname = update['message']['from']['last_name']  # Извлечение фамилии
-        message = update['message']['text'] # Извлечение сообщения
+        message = update['message']['text']  # Извлечение сообщения
 
         if (ADMIN_ID != from_id) and (message == settings.load_config("GET_PASSWORD")):
             Auth.login(from_id)
@@ -49,7 +47,6 @@ def check_updates(limit=5):
                 CURRENT_MODULE = message[1::]
                 continue
             try:
-
                 exec (('modules.%s.handler(message,from_id)')%CURRENT_MODULE)
                 Logger.log_auth_user(message, from_id, name, surname)
             except Exception:
@@ -58,8 +55,6 @@ def check_updates(limit=5):
         if (ADMIN_ID != from_id) and (from_id != TEMP_ID):
             Respond.send_text_respond("You are not autherised,%s.Please,enter password!"%name, from_id )
             Logger.log_notauth_user(message, from_id, name, surname)
-
-
 
 
 class Respond:  # Класс отправления ответа
@@ -85,7 +80,6 @@ class Respond:  # Класс отправления ответа
         if not request.json()['ok']: return False  # Проверка успешности обращения к API
         return True
 
-
     @staticmethod
     def send_document(chat_id, name_of_file):  # Метод отправки файлов
 
@@ -97,6 +91,7 @@ class Respond:  # Класс отправления ответа
         if not request.status_code == 200: return False  # Проверка ответа сервера
         if not request.json()['ok']: return False  # Проверка успешности обращения к API
         return True
+
 
 class Auth:  # Класс авторизации
     @staticmethod
@@ -141,7 +136,7 @@ if __name__ == '__main__':
     Logger.check_files()
     while True:
         try:
-            check_updates(2)
+            check_updates()
         except KeyboardInterrupt:
             print "Stopped by user"
             break
