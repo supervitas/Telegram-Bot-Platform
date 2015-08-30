@@ -26,11 +26,9 @@ def check_updates():
 
     data = {'offset': offset + 1, 'limit': 5, 'timeout': 0}  # Формируем параметры запроса
     request = requests.post(URL + TOKEN + '/getUpdates', data=data)  # Отправка запроса обновлений
-
     if not request.status_code == 200: return False # Проверка ответа сервера
     if not request.json()['ok']: return False  # Проверка успешности обращения к API
     if not request.json()['result']: return False  # Проверка наличия обновлений в возвращенном списке
-
     for update in request.json()['result']: # Проверка каждого элемента списка
         offset = update['update_id']  # Извлечение ID сообщения
         from_id = update['message']['from']['id']  # Извлечение ID отправителя
@@ -38,7 +36,7 @@ def check_updates():
         surname = update['message']['from']['last_name']  # Извлечение фамилии
         message = update['message']['text']  # Извлечение сообщения
 
-        message_thread= threading.Thread(target=message_distribution, args=[message,from_id,name,surname])
+        message_thread= threading.Thread(target=message_distribution, args=[message, from_id, name, surname])
         message_thread.start()
 
 
@@ -51,9 +49,7 @@ def message_distribution(message, from_id, name, surname):  # Решает ко�
             return
 
         if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
-            if (message == '/help'):
-                exec (('modules.%s.handler(message,from_id)')%CURRENT_MODULE)
-                return
+
             if (message[0] == "/"):
                 CURRENT_MODULE = message[1::]
                 return
