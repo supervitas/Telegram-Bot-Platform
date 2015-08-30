@@ -37,15 +37,22 @@ def check_updates():
         surname = update['message']['from']['last_name']  # Извлечение фамилии
         message = update['message']['text']  # Извлечение сообщения
 
+        message_thread= threading.Thread(target=message_distribution, args=[message,from_id,name,surname])
+        message_thread.start()
+
+
+def message_distribution(message, from_id, name, surname):  # Решает кому,что и куда отправлять
+        global CURRENT_MODULE
+
         if (ADMIN_ID != from_id) and (message == settings.load_config("GET_PASSWORD")):
             Auth.login(from_id)
             Respond.send_text_respond("Auth Granted!", from_id)
-            continue
+            return
 
         if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
             if (message[0] == "/"):
                 CURRENT_MODULE = message[1::]
-                continue
+                return
             try:
                 exec (('modules.%s.handler(message,from_id)')%CURRENT_MODULE)
                 Logger.log_auth_user(message, from_id, name, surname)
