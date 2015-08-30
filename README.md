@@ -11,8 +11,7 @@ Install:
 
 4)Enter admin password
 
-Usage:
-Example: /control_server
-ls
+
+Add your modules in modules directory and restart main_handler.py
 
 Writen in Python 2.7.

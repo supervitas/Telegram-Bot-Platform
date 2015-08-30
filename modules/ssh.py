@@ -20,8 +20,9 @@ def handler(message, user_id):
             except Exception:
                 Respond.send_text_respond('File not found', user_id)
         else:
-            p1 = threading.Thread(target=process_worker,args=[message, user_id])
+            p1 = threading.Thread(target=process_worker, args=[message, user_id])
             p1.start()
+
 
 def process_worker(message, user_id):
     global pid
