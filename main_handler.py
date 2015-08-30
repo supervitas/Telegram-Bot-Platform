@@ -25,7 +25,7 @@ def check_updates():
     global offset, CURRENT_MODULE
 
     data = {'offset': offset + 1, 'limit': 5, 'timeout': 0}  # Формируем параметры запроса
-    request = requests.post(URL + TOKEN + '/getUpdates', data=data) # Отправка запроса обновлений
+    request = requests.post(URL + TOKEN + '/getUpdates', data=data)  # Отправка запроса обновлений
 
     if not request.status_code == 200: return False # Проверка ответа сервера
     if not request.json()['ok']: return False  # Проверка успешности обращения к API
