@@ -14,10 +14,11 @@ TEMP_ID = 0  # Временный ID админа.Присваивается о�
 URL = 'https://api.telegram.org/bot'  # Адрес HTTP Bot API
 current_time = 0
 now_plus_10 = 0
-CURRENT_MODULE = 0
+CURRENT_MODULE = 'first_module'
 TOKEN = settings.load_config("GET_TOKEN")
 ADMIN_ID = settings.load_config("GET_ADMIN_ID")
 PASSWORD = settings.load_config("GET_PASSWORD")
+
 
 def check_updates():
 
@@ -50,6 +51,9 @@ def message_distribution(message, from_id, name, surname):  # Решает ко�
             return
 
         if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
+            if (message == '/help'):
+                exec (('modules.%s.handler(message,from_id)')%CURRENT_MODULE)
+                return
             if (message[0] == "/"):
                 CURRENT_MODULE = message[1::]
                 return

@@ -20,6 +20,7 @@ def handler(message, user_id):
             except Exception:
                 Respond.send_text_respond('File not found', user_id)
         else:
+
             p1 = threading.Thread(target=process_worker, args=[message, user_id])
             p1.start()
 
@@ -27,6 +28,10 @@ def handler(message, user_id):
 def process_worker(message, user_id):
     global pid
     try:
+
+        if (message[0] == 'ping'):
+            message.insert(1, '-c')
+            message.insert(2, '4')
         process = sub.Popen(message, stdout=sub.PIPE, stdin=sub.PIPE, stderr=sub.PIPE)
         pid = process.pid
         for row in process.stdout:
