@@ -8,6 +8,7 @@ import settings
 import threading
 import modules
 
+
 settings.check_config()
 offset = 0
 TEMP_ID = 0  # Временный ID админа.Присваивается отправлением пароля
