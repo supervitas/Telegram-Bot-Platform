@@ -2,7 +2,6 @@
 __author__ = 'nikolaev'
 import subprocess as sub
 import threading
-import os
 from main_handler import Respond
 
 
@@ -30,9 +29,6 @@ def process_worker(message, user_id):
     global pid, path
     try:
 
-        if (message[0] == 'ping'):
-            message.insert(1, '-c')
-            message.insert(2, '4')
         process = sub.Popen(message, stdout=sub.PIPE, stdin=sub.PIPE, stderr=sub.PIPE)
         pid = process.pid
         for row in process.stdout:

@@ -2,10 +2,12 @@
 __author__ = 'nikolaev'
 
 import os
+from time import sleep
 from datetime import datetime, timedelta
 import requests
 import settings
 import threading
+
 import modules
 
 
@@ -21,48 +23,70 @@ ADMIN_ID = settings.load_config("GET_ADMIN_ID")
 PASSWORD = settings.load_config("GET_PASSWORD")
 
 
-def check_updates():
+class Handler:
+    def __init__(self, TOKEN = settings.load_config("GET_TOKEN"),
+                 ADMIN_ID = settings.load_config("GET_ADMIN_ID"),
+                 PASSWORD = settings.load_config("GET_PASSWORD"),
+                 CURRENT_MODULE = 'first_module' ):
+        self.current_module = CURRENT_MODULE
+        self.offset = 0
+        self.token = TOKEN
+        self.password = PASSWORD
+        self.admin_id = ADMIN_ID
+        self.temp_id = TEMP_ID
+        self.current_time = 0
+        self.now_plus_10 = 0
 
-    global offset, CURRENT_MODULE
+    def check_updates(self):  # Проверяет обновления
+        data = {'offset': self.offset + 1, 'limit': 5, 'timeout': 0}  # Формируем параметры запроса
+        request = requests.get(URL + TOKEN + '/getUpdates', data=data)  # Отправка запроса обновлений
 
-    data = {'offset': offset + 1, 'limit': 5, 'timeout': 0}  # Формируем параметры запроса
-    request = requests.post(URL + TOKEN + '/getUpdates', data=data)  # Отправка запроса обновлений
-    if not request.status_code == 200: return False # Проверка ответа сервера
-    if not request.json()['ok']: return False  # Проверка успешности обращения к API
-    if not request.json()['result']: return False  # Проверка наличия обновлений в возвращенном списке
-    for update in request.json()['result']: # Проверка каждого элемента списка
-        offset = update['update_id']  # Извлечение ID сообщения
-        from_id = update['message']['from']['id']  # Извлечение ID отправителя
-        name = update['message']['from']['first_name']  # Извлечение имени
-        surname = update['message']['from']['last_name']  # Извлечение фамилии
-        message = update['message']['text']  # Извлечение сообщения
+        if not request.status_code == 200: return False # Проверка ответа сервера
+        if not request.json()['ok']: return False  # Проверка успешности обращения к API
+        if not request.json()['result']: return False  # Проверка наличия обновлений в возвращенном списке
+        for update in request.json()['result']: # Проверка каждого элемента списка
+            self.offset = update['update_id']  # Извлечение ID сообщения
+            from_id = update['message']['from']['id']  # Извлечение ID отправителя
+            name = update['message']['from']['first_name']  # Извлечение имени
+            surname = update['message']['from']['last_name']  # Извлечение фамилии
+            message = update['message']['text']  # Извлечение сообщения
 
-        message_thread= threading.Thread(target=message_distribution, args=[message, from_id, name, surname])
-        message_thread.start()
+            message_thread = threading.Thread(target=self.message_distribution, args=[message, from_id, name, surname])
+            message_thread.start()
 
+    def message_distribution(self, message, from_id, name, surname):  # Решает кому,что и куда отправлять
 
-def message_distribution(message, from_id, name, surname):  # Решает кому,что и куда отправлять
-        global CURRENT_MODULE
-
-        if (ADMIN_ID != from_id) and (message == settings.load_config("GET_PASSWORD")):
-            Auth.login(from_id)
-            Respond.send_text_respond("Auth Granted!", from_id)
-            return
-
-        if (ADMIN_ID == from_id) or (from_id == TEMP_ID and Auth.zero_access()):
-
-            if (message[0] == "/"):
-                CURRENT_MODULE = message[1::]
+            if (self.admin_id != from_id) and (message == self.PASSWORD):
+                self.login(from_id)
+                Respond.send_text_respond("Auth Granted!", from_id)
                 return
-            try:
-                exec (('modules.%s.handler(message,from_id)')%CURRENT_MODULE)
-                Logger.log_auth_user(message, from_id, name, surname)
-            except Exception:
-                Respond.send_text_respond("Module with this name not found", from_id)
 
-        if (ADMIN_ID != from_id) and (from_id != TEMP_ID):
-            Respond.send_text_respond("You are not autherised,%s.Please,enter password!"%name, from_id )
-            Logger.log_notauth_user(message, from_id, name, surname)
+            if (self.admin_id == from_id) or (from_id == self.temp_id and self.zero_access()):
+
+                if (message[0] == "/"):
+                    self.current_module = message[1::]
+                    return
+                try:
+                    exec (('modules.%s.handler(message,from_id)')% self.current_module)
+                    Logger.log_auth_user(message, from_id, name, surname)
+                except Exception:
+                    Respond.send_text_respond("Some Error", from_id)
+
+            if (self.admin_id != from_id) and (from_id != self.temp_id):
+                Respond.send_text_respond("You are not autherised,%s.Please,enter password!"%name, from_id )
+                Logger.log_notauth_user(message, from_id, name, surname)
+
+    def login(self, id): # Функция авторизации длится 10 минут
+        self.temp_id = id
+        self.current_time = datetime.now()
+        self.now_plus_10 = self.current_time + timedelta(minutes=10)
+
+    def zero_access(self):  # Проверка истечения админки
+        if (self.datetime.now() < self.now_plus_10):
+            return True
+        else:
+            self.temp_id = 0
+            return False
 
 
 class Respond:  # Класс отправления ответа
@@ -101,24 +125,6 @@ class Respond:  # Класс отправления ответа
         return True
 
 
-class Auth:  # Класс авторизации
-    @staticmethod
-    def login(id): # Функция авторизации длится 10 минут
-        global TEMP_ID, current_time, now_plus_10
-        TEMP_ID = id
-        current_time = datetime.now()
-        now_plus_10 = current_time + timedelta(minutes=10)
-
-    @staticmethod
-    def zero_access():  # Проверка истечения админки
-        global current_time, now_plus_10, TEMP_ID
-        if (datetime.now() < now_plus_10):
-            return True
-        else:
-            TEMP_ID = 0
-            return False
-
-
 class Logger:  # Класс отвечает за логирование + настройки
 
     @staticmethod
@@ -133,18 +139,24 @@ class Logger:  # Класс отвечает за логирование + на�
 
     @staticmethod
     def check_files():  # Создаем файлы логов и настроек
+        if not (os.path.isdir('Downloads')):
+            os.mkdir('Downloads')
         if not (os.path.isfile('logs/auth_msg.log') and os.path.isfile('logs/not_auth_msg.log')):
             if not (os.path.isdir('logs')):
                 os.mkdir('logs')
+
+
             f1 = open('logs/not_auth_msg.log', 'w')
             f2 = open('logs/auth_msg.log', 'w')
             f1.close(), f2.close()
 
+
 if __name__ == '__main__':
+    main_handler = Handler()
     Logger.check_files()
     while True:
         try:
-            check_updates()
+            main_handler.check_updates()
         except KeyboardInterrupt:
             print "Stopped by user"
             break
