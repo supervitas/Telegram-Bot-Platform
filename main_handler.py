@@ -27,7 +27,7 @@ class Handler:
     def __init__(self, TOKEN = settings.load_config("GET_TOKEN"),
                  ADMIN_ID = settings.load_config("GET_ADMIN_ID"),
                  PASSWORD = settings.load_config("GET_PASSWORD"),
-                 CURRENT_MODULE = 'first_module' ):
+                 CURRENT_MODULE = 'first_module'):
         self.current_module = CURRENT_MODULE
         self.offset = 0
         self.token = TOKEN
@@ -56,7 +56,7 @@ class Handler:
 
     def message_distribution(self, message, from_id, name, surname):  # Решает кому,что и куда отправлять
 
-            if (self.admin_id != from_id) and (message == self.PASSWORD):
+            if (self.admin_id != from_id) and (message == self.password):
                 self.login(from_id)
                 Respond.send_text_respond("Auth Granted!", from_id)
                 return
@@ -76,7 +76,7 @@ class Handler:
                 Respond.send_text_respond("You are not autherised,%s.Please,enter password!"%name, from_id )
                 Logger.log_notauth_user(message, from_id, name, surname)
 
-    def login(self, id): # Функция авторизации длится 10 минут
+    def login(self, id):  # Функция авторизации длится 10 минут
         self.temp_id = id
         self.current_time = datetime.now()
         self.now_plus_10 = self.current_time + timedelta(minutes=10)
@@ -144,8 +144,6 @@ class Logger:  # Класс отвечает за логирование + на�
         if not (os.path.isfile('logs/auth_msg.log') and os.path.isfile('logs/not_auth_msg.log')):
             if not (os.path.isdir('logs')):
                 os.mkdir('logs')
-
-
             f1 = open('logs/not_auth_msg.log', 'w')
             f2 = open('logs/auth_msg.log', 'w')
             f1.close(), f2.close()
@@ -154,9 +152,11 @@ class Logger:  # Класс отвечает за логирование + на�
 if __name__ == '__main__':
     main_handler = Handler()
     Logger.check_files()
+
     while True:
         try:
             main_handler.check_updates()
+            sleep(2)
         except KeyboardInterrupt:
             print "Stopped by user"
             break

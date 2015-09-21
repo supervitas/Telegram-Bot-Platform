@@ -11,7 +11,7 @@ path = 0
 def handler(message, user_id):
         global pid
         message = message.split(" ")
-        if message[0] == 'stop' and pid != 0:
+        if message[0] == 'break' and pid != 0:
             sub.Popen(("kill", str(pid)))
             return
         if message[0] == 'send':

@@ -1,6 +1,6 @@
 __author__ = 'nikolaev'
 
-import subprocess as sub
+import os
 from main_handler import Respond
 import urllib
 
@@ -17,8 +17,8 @@ def handler(message, user_id):
             return
 
     if message[0] == 'ls':
-        process = sub.Popen(('ls', 'Downloads/'), stdout=sub.PIPE)
-        for row in process.stdout:
+        lists = os.listdir('Downloads')
+        for row in lists:
             Respond.send_text_respond(row, user_id)
         return
 
