@@ -2,7 +2,7 @@
 __author__ = 'nikolaev'
 
 import os
-from time import sleep
+from time import sleep, gmtime, strftime
 from datetime import datetime, timedelta
 import requests
 import settings
@@ -38,8 +38,10 @@ class Handler:
         self.now_plus_10 = 0
 
     def check_updates(self):  # Проверяет обновления
+
         data = {'offset': self.offset + 1, 'limit': 5, 'timeout': 0}  # Формируем параметры запроса
         request = requests.get(URL + TOKEN + '/getUpdates', data=data)  # Отправка запроса обновлений
+
 
         if not request.status_code == 200: return False # Проверка ответа сервера
         if not request.json()['ok']: return False  # Проверка успешности обращения к API
@@ -47,6 +49,7 @@ class Handler:
         for update in request.json()['result']: # Проверка каждого элемента списка
             self.offset = update['update_id']  # Извлечение ID сообщения
 
+            photo_id = 0
             file_id = 0
             message = ' '
             file_name = 0
@@ -55,16 +58,19 @@ class Handler:
             if ('document' in mes):
                 file_id = update['message']['document']['file_id']  # Извлечение контента
                 file_name = update['message']['document']['file_name']
+            if ('photo' in mes):
+                photo_id = update['message']['photo'][0]['file_id']
+
             from_id = update['message']['from']['id']  # Извлечение ID отправителя
             name = update['message']['from']['first_name']  # Извлечение имени
             surname = update['message']['from']['last_name']  # Извлечение фамилии
             if ('text' in mes):
                 message = update['message']['text']  # Извлечение сообщения
 
-            message_thread = threading.Thread(target=self.message_distribution, args=[message, from_id, name, surname, file_id, file_name])
+            message_thread = threading.Thread(target=self.message_distribution, args=[message, from_id, name, surname, file_id, file_name, photo_id])
             message_thread.start()
 
-    def message_distribution(self, message, from_id, name, surname, file_id, file_name):  # Решает кому,что и куда отправлять
+    def message_distribution(self, message, from_id, name, surname, file_id, file_name, photo_id):  # Решает кому,что и куда отправлять
 
             if (self.admin_id != from_id) and (message == self.password):
                 self.login(from_id)
@@ -75,9 +81,12 @@ class Handler:
 
                 if (file_id != 0):
                     Respond.getFile(file_id, file_name)
-                    Respond.send_text_respond('Downloaded', from_id)
+                    Respond.send_text_respond('Download complete!:)', from_id)
                     return
-
+                if (photo_id !=0 ):
+                    Respond.getFile(photo_id)
+                    Respond.send_text_respond('Downloaded:)', from_id)
+                    return
 
                 if (message[0] == "/"):
                     self.current_module = message[1::]
@@ -136,14 +145,16 @@ class Respond:  # Класс ответов
 
         request = requests.post(URL+TOKEN+'/sendDocument', data=data, files=document)
 
+
         if not request.status_code == 200: return False  # Проверка ответа сервера
         if not request.json()['ok']: return False  # Проверка успешности обращения к API
         return True
 
 
     @staticmethod
-    def getFile(file_id, file_name):
+    def getFile(file_id, file_name=strftime("%a, %d %b %Y %H:%M:%S.jpg", gmtime())):
         data = {'file_id': file_id}  # Формируем параметры запроса
+
         request = requests.get(URL + TOKEN + '/getFile', data=data)  # Отправка запроса обновлений
 
         path = 'https://api.telegram.org/file/bot'+TOKEN+'/'+request.json()['result']['file_path']
