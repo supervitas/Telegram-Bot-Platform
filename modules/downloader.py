@@ -2,6 +2,7 @@ __author__ = 'nikolaev'
 
 import os
 from main_handler import Respond
+import  subprocess as sub
 import urllib
 
 def handler(message, user_id):
@@ -10,15 +11,15 @@ def handler(message, user_id):
 
     if message[0] == 'send':
         try:
-            Respond.send_document(user_id, 'Downloads/' + message[1])
+            Respond.send_document(user_id, 'Downloads/' + " ".join(message[1:]))
             return
         except Exception:
             Respond.send_text_respond('File not found', user_id)
             return
 
     if message[0] == 'ls':
-        lists = os.listdir('Downloads')
-        for row in lists:
+        lists = sub.Popen(('ls', 'Downloads/'), stdout=sub.PIPE, stdin=sub.PIPE, stderr=sub.PIPE)
+        for row in lists.stdout:
             Respond.send_text_respond(row, user_id)
         return
 
