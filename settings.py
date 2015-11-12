@@ -2,7 +2,7 @@
 __author__ = 'nikolaev'
 
 import ConfigParser
-import os
+import os, sys
 
 
 def make_config():
@@ -24,9 +24,9 @@ def make_config():
 
 
 def load_config(case):
+    pathname = os.path.dirname(sys.argv[0])
     parser = ConfigParser.SafeConfigParser()
-    parser.read('telegram_settings.conf')
-
+    parser.read(pathname + '/telegram_settings.conf')
     ADMIN_ID = int(parser.get('Main Settings', 'admin_id'))
     TOKEN = parser.get('Main Settings', 'token')
     TEMP_PASSWORD = parser.get('Main Settings', 'admin password')
@@ -40,5 +40,5 @@ def load_config(case):
 
 
 def check_config():
-    if not (os.path.isfile('telegram_settings.conf')):
+    if not (os.path.dirname(sys.argv[0])+('telegram_settings.conf')):
         make_config()
