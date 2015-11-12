@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 __author__ = 'nikolaev'
 
+<<<<<<< HEAD
 import os,sys
+=======
+import os
+>>>>>>> 9aa84169a204817b739a78ef697a2c155c676571
 from time import sleep, gmtime, strftime
 from datetime import datetime, timedelta
 import requests
@@ -27,7 +31,11 @@ class Handler:
     def __init__(self, TOKEN = settings.load_config("GET_TOKEN"),
                  ADMIN_ID = settings.load_config("GET_ADMIN_ID"),
                  PASSWORD = settings.load_config("GET_PASSWORD"),
+<<<<<<< HEAD
                  CURRENT_MODULE = 'ssh'):
+=======
+                 CURRENT_MODULE = 'first_module'):
+>>>>>>> 9aa84169a204817b739a78ef697a2c155c676571
         self.current_module = CURRENT_MODULE
         self.offset = 0
         self.token = TOKEN
@@ -154,10 +162,18 @@ class Respond:  # Класс ответов
     @staticmethod
     def getFile(file_id, file_name=strftime("%a, %d %b %Y %H:%M:%S.jpg", gmtime())):
         data = {'file_id': file_id}  # Формируем параметры запроса
+<<<<<<< HEAD
         request = requests.get(URL + TOKEN + '/getFile', data=data)  # Отправка запроса обновлений
         path = 'https://api.telegram.org/file/bot'+TOKEN+'/'+request.json()['result']['file_path']
         pathname = os.path.dirname(sys.argv[0])
         name_of_file = pathname + '/Downloads/' + file_name
+=======
+
+        request = requests.get(URL + TOKEN + '/getFile', data=data)  # Отправка запроса обновлений
+
+        path = 'https://api.telegram.org/file/bot'+TOKEN+'/'+request.json()['result']['file_path']
+        name_of_file = 'Downloads/' + file_name
+>>>>>>> 9aa84169a204817b739a78ef697a2c155c676571
         urllib.urlretrieve (path, name_of_file)
 
 
